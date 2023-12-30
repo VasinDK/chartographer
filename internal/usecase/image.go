@@ -63,7 +63,7 @@ func (I *ImageUC) Create(width, height int) (string, error) {
 	black := color.RGBA{0, 0, 0, 1}
 	draw.Draw(img, img.Bounds(), &image.Uniform{black}, image.Point{0, 0}, draw.Src)
 
-	id := "I.Utils.GetRandLen(lenIdImg)"
+	id := "I.Utils.GetRandLen(lenIdImg)" // временно
 
 	file, err := os.Create(addressImages + id + fileExtension)
 	if err != nil {
@@ -81,8 +81,7 @@ func (I *ImageUC) Create(width, height int) (string, error) {
 }
 
 func (I *ImageUC) Add(chart *entity.Chart) error {
-	nameSrcFile := I.Utils.GetRandLen(lenIdImg)
-
+	I.Create(400, 400) // временно
 	dstFile, err := os.Open(addressImages + chart.IdParent + fileExtension)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -98,41 +97,39 @@ func (I *ImageUC) Add(chart *entity.Chart) error {
 
 	draw.Draw(newRGBA, dst.Bounds(), dst, image.Point{}, draw.Src)
 
-	srcFile, err := os.Create(addressImages + nameSrcFile + fileExtension)
+	src, err := I.Utils.DecodeBMP(chart.File)
 	if err != nil {
 		return err
 	}
 
-	_, err = io.Copy(srcFile, chart.File)
-	if err != nil {
-		return err
-	}
-	srcFile.Close()
+	rectWidth := newRGBA.Bounds().Dx() - chart.X
+	rectHeight := newRGBA.Bounds().Dy() - chart.Y
 
-	srcFile, err = os.Open(addressImages + nameSrcFile + fileExtension)
-	if err != nil {
-		return err
+	if rectWidth >= chart.Width {
+		rectWidth = chart.Width
 	}
 
-	src, err := I.Utils.DecodeBMP(srcFile) // chart.File chatGPT
-	if err != nil {
-		return err
+	rectWidth += chart.X
+
+	if rectHeight >= chart.Height {
+		rectHeight = chart.Height
 	}
+
+	rectHeight += chart.Y
 
 	r := image.Rectangle{
 		image.Point{
-			0, //chart.X,
-			0, //chart.Y,
+			chart.X,
+			chart.Y,
 		},
+
 		image.Point{
-			50, //chart.Width,
-			50, //chart.Height,
+			rectWidth,
+			rectHeight,
 		},
 	}
 
 	draw.Draw(newRGBA, r, src, src.Bounds().Min, draw.Src)
-
-	srcFile.Close()
 
 	dstFile, err = os.Create(addressImages + chart.IdParent + fileExtension)
 	if err != nil {
@@ -143,7 +140,6 @@ func (I *ImageUC) Add(chart *entity.Chart) error {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-
 	dstFile.Close()
 
 	return nil
