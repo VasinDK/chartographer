@@ -1,0 +1,10 @@
+app:
+  name: "go-template"
+  version: '1.0.0'
+
+http: 
+  port: ":8080"
+  waiting_timeout_close: 10   #second
+
+logger:
+  log_env: "dev"
