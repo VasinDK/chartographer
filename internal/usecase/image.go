@@ -7,6 +7,7 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	"io"
+	"net/http"
 	"os"
 	"this_module/internal/entity"
 )
@@ -15,55 +16,39 @@ type Utiler interface {
 	GetRandLen(int) string
 	EncodeBMP(io.Writer, image.Image) error
 	DecodeBMP(io.Reader) (image.Image, error)
+	NewChart(*http.Request) (*entity.Chart, error)
 }
 
 type ImageUC struct {
 	Utils Utiler
 }
 
-const lenIdImg = 15
-const addressImages = "./docs/img/"
-const fileExtension = ".bmp"
+const (
+	lenIdImg      = 15
+	addressImages = "./docs/img/"
+	fileExtension = ".bmp"
+	heightMax     = 50000
+	widthMax      = 20000
+)
 
+// New создает экземпляр usecase
 func New(Utils Utiler) *ImageUC {
 	return &ImageUC{
 		Utils,
 	}
 }
 
+// Create создает изображение
 func (I *ImageUC) Create(width, height int) (string, error) {
-	if width < 1 || width > 20000 || height < 1 || height > 50000 {
+	if width <= 0 || width > widthMax || height <= 0 || height > heightMax {
 		return "", fmt.Errorf("The image dimensions exceed the allowed ones")
 	}
-
-	/* reader, err := os.Open("./docs/img/porfolio.jpg")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	defer reader.Close() */
-
-	// conf, _, err := image.DecodeConfig(reader)
-	// fmt.Println(conf.Height, conf.Width)
-
-	// m, _, err := image.Decode(reader)
-	// fmt.Println(m.Bounds().Dx(), m.Bounds().Dy(), image.Pt(0, 0).In(m.Bounds()))
-
-	// if err != nil {
-	// fmt.Println(err.Error())
-	// }
-
-	// r := image.Rect(1, 1, 10, 10)
-	// fmt.Println(r.Dx(), r.Dy(), image.Pt(0, 0).In(r))
-
-	// bounds := m.Bounds()
-	// fmt.Println("width, height", width, height)
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	black := color.RGBA{0, 0, 0, 1}
 	draw.Draw(img, img.Bounds(), &image.Uniform{black}, image.Point{0, 0}, draw.Src)
 
-	id := "I.Utils.GetRandLen(lenIdImg)" // временно
+	id := "I.Utils.GetRandLen(lenIdImg)" // временно. Разкоментить
 
 	file, err := os.Create(addressImages + id + fileExtension)
 	if err != nil {
@@ -80,22 +65,23 @@ func (I *ImageUC) Create(width, height int) (string, error) {
 	return id, nil
 }
 
+// Add добавляет изображение на имеющееся
 func (I *ImageUC) Add(chart *entity.Chart) error {
-	I.Create(400, 400) // временно
-	dstFile, err := os.Open(addressImages + chart.IdParent + fileExtension)
+	I.Create(400, 400) // временно. Удалить
+	path := addressImages + chart.IdParent + fileExtension
+
+	dstFile, err := os.Open(path)
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
 
 	dst, err := I.Utils.DecodeBMP(dstFile)
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
 	dstFile.Close()
 
-	newRGBA := image.NewRGBA(dst.Bounds())
-
-	draw.Draw(newRGBA, dst.Bounds(), dst, image.Point{}, draw.Src)
+	newRGBA := dst.(draw.Image)
 
 	src, err := I.Utils.DecodeBMP(chart.File)
 	if err != nil {
@@ -131,16 +117,56 @@ func (I *ImageUC) Add(chart *entity.Chart) error {
 
 	draw.Draw(newRGBA, r, src, src.Bounds().Min, draw.Src)
 
-	dstFile, err = os.Create(addressImages + chart.IdParent + fileExtension)
+	tempPath := addressImages + "tempFile" + fileExtension
+
+	tempFile, err := os.Create(tempPath)
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
 
-	err = I.Utils.EncodeBMP(dstFile, newRGBA)
+	err = I.Utils.EncodeBMP(tempFile, newRGBA)
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
+	}
+	tempFile.Close()
+
+	err = os.Remove(path)
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(tempPath, path)
+
+	return nil
+}
+
+// Part возвращает часть изображения
+func (I *ImageUC) Part(chart *entity.Chart) (*image.RGBA, error) {
+	dstFile, err := os.Open(addressImages + chart.IdParent + fileExtension)
+	if err != nil {
+		return nil, err
+	}
+
+	dst, err := I.Utils.DecodeBMP(dstFile)
+	if err != nil {
+		return nil, err
 	}
 	dstFile.Close()
+
+	r := image.Rect(chart.X, chart.Y, chart.Width, chart.Height)
+	newRGBA := image.NewRGBA(r)
+
+	draw.Draw(newRGBA, r, dst, image.Point{}, draw.Src)
+
+	return newRGBA, nil
+}
+
+// Delete удаляет изображение с идентификатором
+func (I *ImageUC) Delete(id string) error {
+	err := os.Remove(addressImages + id + fileExtension)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -20,7 +20,7 @@ func Run(cfg *config.Config) {
 	utils := utils.New()
 	imageUseCase := usecase.New(utils)
 
-	router, err := v1.NewRouter(l, imageUseCase)
+	router, err := v1.NewRouter(l, imageUseCase)	// дополнить логер
 	if err != nil {
 		l.Error(err.Error())
 		os.Exit(1)
