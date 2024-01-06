@@ -40,7 +40,6 @@ func NewRouter(l *slog.Logger, uc *usecase.ImageUC) (*chi.Mux, error) {
 		r.Post("/chartas/{idParent}/", func(w http.ResponseWriter, r *http.Request) {
 			chart, err := uc.Utils.NewChart(r)
 			// сделать проверку параметров
-
 			chart.File, chart.Handle, err = r.FormFile(formName)
 			defer chart.File.Close()
 			if err != nil {
@@ -91,4 +90,3 @@ func NewRouter(l *slog.Logger, uc *usecase.ImageUC) (*chi.Mux, error) {
 
 	return r, nil
 }
-

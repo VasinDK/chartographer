@@ -13,6 +13,13 @@ import (
 	"this_module/pkg/logger"
 )
 
+/*
+todo:
+1. Дополнить логер req_id
+2. Тестирование unit и интеграционное
+3. Комментарии
+*/
+
 func Run(cfg *config.Config) {
 	l := logger.New(cfg.Logger.Level)
 	// pg := 0
@@ -20,7 +27,7 @@ func Run(cfg *config.Config) {
 	utils := utils.New()
 	imageUseCase := usecase.New(utils)
 
-	router, err := v1.NewRouter(l, imageUseCase)	// дополнить логер
+	router, err := v1.NewRouter(l, imageUseCase)
 	if err != nil {
 		l.Error(err.Error())
 		os.Exit(1)
