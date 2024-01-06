@@ -24,11 +24,11 @@ type ImageUC struct {
 }
 
 const (
-	lenIdImg      = 15
-	addressImages = "./docs/img/"
-	fileExtension = ".bmp"
-	heightMax     = 50000
-	widthMax      = 20000
+	LenIdImg      = 15
+	AddressImages = "./docs/img/"
+	FileExtension = ".bmp"
+	HeightMax     = 50000
+	WidthMax      = 20000
 )
 
 // New создает экземпляр usecase
@@ -40,7 +40,7 @@ func New(Utils Utiler) *ImageUC {
 
 // Create создает изображение
 func (I *ImageUC) Create(width, height int) (string, error) {
-	if width <= 0 || width > widthMax || height <= 0 || height > heightMax {
+	if width <= 0 || width > WidthMax || height <= 0 || height > HeightMax {
 		return "", fmt.Errorf("The image dimensions exceed the allowed ones")
 	}
 
@@ -48,9 +48,9 @@ func (I *ImageUC) Create(width, height int) (string, error) {
 	black := color.RGBA{0, 0, 0, 1}
 	draw.Draw(img, img.Bounds(), &image.Uniform{black}, image.Point{0, 0}, draw.Src)
 
-	id := "I.Utils.GetRandLen(lenIdImg)" // временно. Разкоментить
+	id := I.Utils.GetRandLen(LenIdImg) // временно. Разкоментить
 
-	file, err := os.Create(addressImages + id + fileExtension)
+	file, err := os.Create(AddressImages + id + FileExtension)
 	if err != nil {
 		return "", err
 	}
@@ -67,8 +67,8 @@ func (I *ImageUC) Create(width, height int) (string, error) {
 
 // Add добавляет изображение на имеющееся
 func (I *ImageUC) Add(chart *entity.Chart) error {
-	I.Create(400, 400) // временно. Удалить
-	path := addressImages + chart.IdParent + fileExtension
+	// I.Create(400, 400) // временно. Удалить
+	path := AddressImages + chart.IdParent + FileExtension
 
 	dstFile, err := os.Open(path)
 	if err != nil {
@@ -117,7 +117,7 @@ func (I *ImageUC) Add(chart *entity.Chart) error {
 
 	draw.Draw(newRGBA, r, src, src.Bounds().Min, draw.Src)
 
-	tempPath := addressImages + "tempFile" + fileExtension
+	tempPath := AddressImages + "tempFile" + FileExtension
 
 	tempFile, err := os.Create(tempPath)
 	if err != nil {
@@ -142,7 +142,7 @@ func (I *ImageUC) Add(chart *entity.Chart) error {
 
 // Part возвращает часть изображения
 func (I *ImageUC) Part(chart *entity.Chart) (*image.RGBA, error) {
-	dstFile, err := os.Open(addressImages + chart.IdParent + fileExtension)
+	dstFile, err := os.Open(AddressImages + chart.IdParent + FileExtension)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (I *ImageUC) Part(chart *entity.Chart) (*image.RGBA, error) {
 
 // Delete удаляет изображение с идентификатором
 func (I *ImageUC) Delete(id string) error {
-	err := os.Remove(addressImages + id + fileExtension)
+	err := os.Remove(AddressImages + id + FileExtension)
 	if err != nil {
 		return err
 	}

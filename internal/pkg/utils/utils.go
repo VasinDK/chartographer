@@ -18,8 +18,8 @@ func (u *Utils) GetRandLen(aliasLangth int) string {
 	return random.GetRandomByLength(aliasLangth)
 }
 
-func (u *Utils) EncodeBMP(file io.Writer, img image.Image) error {
-	return bmp.Encode(file, img)
+func (u *Utils) EncodeBMP(w io.Writer, img image.Image) error {
+	return bmp.Encode(w, img)
 }
 
 func (u *Utils) DecodeBMP(file io.Reader) (image.Image, error) {
