@@ -1,10 +1,10 @@
-# chartographer
-Приложение решает тестовую задачу. Само задание можно посмотреть [здесь](https://evrone.ru/).
+# Chartographer
+Приложение решает тестовую задачу. Само задание можно посмотреть [здесь](https://github.com/VasinDK/chartographer/blob/main/README_task.md).
 
 В решении:
 - Clean architecture
 - sync.RWMutex
-- Contex
+- Context
 - Интеграционные тесты
 - HTTP сервер (chi)
 - Logger (slog)
