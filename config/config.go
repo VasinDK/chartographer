@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	App    `yaml:"app"`
-	HTTP   `yaml:"http"`
-	Logger `yaml:"logger"`
+	App         `yaml:"app"`
+	HTTP        `yaml:"http"`
+	Logger      `yaml:"logger"`
+	FileStorage `yaml:"filestorage"`
 }
 
 type App struct {
@@ -24,6 +25,10 @@ type HTTP struct {
 
 type Logger struct {
 	Level string `env-required:"true" yaml:"log_env" env:"LOG_ENV"`
+}
+
+type FileStorage struct {
+	Path string `env-required:"true" yaml:"path" env:"PATH_FILE_ENV"`
 }
 
 func NewConfig() (*Config, error) {
