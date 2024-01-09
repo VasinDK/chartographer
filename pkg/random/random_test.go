@@ -1,8 +1,8 @@
 package random_test
 
 import (
-	"mod_shortener/internal/lib/random"
 	"testing"
+	"this_module/pkg/random"
 	"time"
 )
 

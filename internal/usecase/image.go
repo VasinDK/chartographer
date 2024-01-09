@@ -19,8 +19,19 @@ type Utiler interface {
 	NewChart(*http.Request) (*entity.Chart, error)
 }
 
+type Repository interface {
+	GetAllFile(string) ([]string, error)
+	AddFileInList(string, string)
+	DelFileInList(string)
+	LockFile(string)
+	UnlockFile(string)
+	RLockFile(string)
+	RUnlockFile(string)
+}
+
 type ImageUC struct {
 	Utils Utiler
+	Repo  Repository
 }
 
 const (
@@ -32,9 +43,10 @@ const (
 )
 
 // New создает экземпляр usecase
-func New(Utils Utiler) *ImageUC {
+func New(Utils Utiler, Repo Repository) *ImageUC {
 	return &ImageUC{
 		Utils,
+		Repo,
 	}
 }
 
@@ -48,7 +60,7 @@ func (I *ImageUC) Create(width, height int) (string, error) {
 	black := color.RGBA{0, 0, 0, 1}
 	draw.Draw(img, img.Bounds(), &image.Uniform{black}, image.Point{0, 0}, draw.Src)
 
-	id := I.Utils.GetRandLen(LenIdImg) // временно. Разкоментить
+	id := I.Utils.GetRandLen(LenIdImg)
 
 	file, err := os.Create(AddressImages + id + FileExtension)
 	if err != nil {
@@ -62,13 +74,17 @@ func (I *ImageUC) Create(width, height int) (string, error) {
 		return "", err
 	}
 
+	I.Repo.AddFileInList(id, FileExtension)
+
 	return id, nil
 }
 
 // Add добавляет изображение на имеющееся
 func (I *ImageUC) Add(chart *entity.Chart) error {
-	// I.Create(400, 400) // временно. Удалить
 	path := AddressImages + chart.IdParent + FileExtension
+
+	I.Repo.LockFile(chart.IdParent)
+	defer I.Repo.UnlockFile(chart.IdParent)
 
 	dstFile, err := os.Open(path)
 	if err != nil {
@@ -142,6 +158,9 @@ func (I *ImageUC) Add(chart *entity.Chart) error {
 
 // Part возвращает часть изображения
 func (I *ImageUC) Part(chart *entity.Chart) (*image.RGBA, error) {
+	I.Repo.RLockFile(chart.IdParent)
+	defer I.Repo.RUnlockFile(chart.IdParent)
+
 	dstFile, err := os.Open(AddressImages + chart.IdParent + FileExtension)
 	if err != nil {
 		return nil, err
@@ -153,6 +172,8 @@ func (I *ImageUC) Part(chart *entity.Chart) (*image.RGBA, error) {
 	}
 	dstFile.Close()
 
+	// I.Repo.RUnlockFile(chart.IdParent)
+
 	r := image.Rect(chart.X, chart.Y, chart.Width, chart.Height)
 	newRGBA := image.NewRGBA(r)
 
@@ -163,6 +184,12 @@ func (I *ImageUC) Part(chart *entity.Chart) (*image.RGBA, error) {
 
 // Delete удаляет изображение с идентификатором
 func (I *ImageUC) Delete(id string) error {
+	I.Repo.LockFile(id)
+	defer func() {
+		I.Repo.UnlockFile(id)
+		I.Repo.DelFileInList(id)
+	}()
+
 	err := os.Remove(AddressImages + id + FileExtension)
 	if err != nil {
 		return err
